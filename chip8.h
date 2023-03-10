@@ -64,14 +64,17 @@
 #define ROM_END 0xFFF // 4095
 #define ROM_SIZE (ROM_END - ROM_START)
 
-// Display
-#define DISPLAY_SIZE 64 * 32
-
 #define SIZE(arr) sizeof(arr)/sizeof(arr[0])
 
 typedef unsigned short ushort;
 typedef unsigned char uchar;
 typedef int bool;
+
+// Display
+#define DISPLAY_HEIGHT 64
+#define DISPLAY_LENGTH 32
+#define DISPLAY_SIZE (DISPLAY_HEIGHT * DISPLAY_LENGTH * sizeof(uchar))
+
 
 typedef struct Chip8 {
     ushort I;
@@ -87,7 +90,7 @@ typedef struct Chip8 {
     ushort key[KEYPAD_SIZE];
     ushort stack[STACK_SIZE];
 
-    uchar display[DISPLAY_SIZE];
+    uchar display[DISPLAY_LENGTH][DISPLAY_HEIGHT];
 
 } Chip8;
 

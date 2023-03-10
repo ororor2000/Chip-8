@@ -84,6 +84,23 @@ int decode(Chip8 *chip8, ushort opcode) {
             chip8->pc = opcode & THREE_RIGHT_BITS; // JUMP: PC = nnn
             jump = TRUE;
             break;
+        case SIG_3: // 3xkk
+            ushort kk = opcode & TWO_RIGHTS_BITS;
+            if (chip8->V[x] == kk) { //if Vx == kk, pc += 2
+                chip8->pc += 2;
+            }
+            break;
+        case SIG_4: // 4xkk
+            ushort kk = opcode & TWO_RIGHTS_BITS;
+            if (chip8->V[x] != kk) { //if Vx != kk, pc += 2
+                chip8->pc += 2;
+            }
+            break;
+        case SIG_5: // 5xy0        
+            if (chip8->V[x] == chip8->V[y]) {
+                chip8->pc += 2;
+            }
+            break;
         case SIG_6: // 6xkk
             chip8->V[x] = opcode & TWO_RIGHTS_BITS; // Vx = kk
             break;
@@ -92,6 +109,11 @@ int decode(Chip8 *chip8, ushort opcode) {
             break;
         case SIG_8:
             decode_sig_8_codes(chip8, x, y, opcode);
+        case SIG_9: // 9xy0
+            if (chip8->V[x] != chip8->V[y]) { // if Vx != Vy, pc += 2
+                chip8->pc += 2;
+            }
+            break;
         case SIG_A: // Annn
             chip8->I = opcode & THREE_RIGHT_BITS; // I = nnn
             break;     
@@ -101,7 +123,7 @@ int decode(Chip8 *chip8, ushort opcode) {
             jump = TRUE;
             break;
         case SIG_C: // Cxkk
-            ushort random  = rand() % 255;
+            ushort random  = rand() % 255; // random number from 0 to 255
             ushort kk = opcode & TWO_RIGHTS_BITS;
             chip8->V[x] = random & kk;
             break;
@@ -173,6 +195,13 @@ void decode_sig_8_codes(Chip8 *chip8, ushort x, ushort y, ushort opcode) {
 }
 
 void decode_sig_E_codes(Chip8 *chip8, ushort x, ushort opcode) {
+    ushort nibble = opcode & FOURTH_BIT;
+
+    if (nibble == 0x000E) {
+
+    } else { // 0x0001
+
+    }
 }
 
 void decode_sig_F_codes(Chip8 *chip8, ushort x, ushort opcode) {
