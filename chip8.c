@@ -52,3 +52,131 @@ int load_rom(Chip8 *chip8, char* file_name) {
 
     return 0;
 }
+
+int cycle(Chip8 *chip8) {
+    if (chip8->delay_timer > 0) {
+        --(chip8->delay_timer);
+    }
+
+    if (chip8->sound_timer > 0) {
+        --(chip8->sound_timer);
+    }
+
+    ushort opcode = chip8->memory[chip8->pc] << 8 | chip8->memory[chip8->pc + 1];
+    
+    decode(chip8, opcode);
+}
+
+int decode(Chip8 *chip8, ushort opcode) {
+    chip8->opcode = opcode;
+
+    ushort left_bit = chip8->opcode & FIRST_BIT;
+    ushort x = (opcode & SECOND_BIT) >> 8;
+    ushort y = (opcode & THIRD_BIT) >> 4;
+
+    bool jump = FALSE;
+
+    switch (left_bit) {
+        case SIG_0:
+            decode_sig_0_codes(chip8, opcode);
+            break;
+        case SIG_1: // 1nnn
+            chip8->pc = opcode & THREE_RIGHT_BITS; // JUMP: PC = nnn
+            jump = TRUE;
+            break;
+        case SIG_6: // 6xkk
+            chip8->V[x] = opcode & TWO_RIGHTS_BITS; // Vx = kk
+            break;
+        case SIG_7: // 7xkk    
+            chip8->V[x] += opcode & TWO_RIGHTS_BITS; // Vx = kk
+            break;
+        case SIG_8:
+            decode_sig_8_codes(chip8, x, y, opcode);
+        case SIG_A: // Annn
+            chip8->I = opcode & THREE_RIGHT_BITS; // I = nnn
+            break;       
+        case SIG_E:
+            decode_sig_E_codes(chip8, x, opcode);
+            break;
+        case SIG_D: // DXYN
+            draw(chip8, opcode);
+        default:
+            return 2;
+    }
+
+    if (!jump) {
+        chip8->pc += 2;
+    }
+}
+
+void decode_sig_0_codes(Chip8 *chip8, ushort opcode) {
+    if (opcode == 0x00E0) {
+        memset(chip8->display, 0, DISPLAY_SIZE);
+    } 
+    // else if (opcode == 0x00EE) {
+    //     //
+        
+    // } else { // 0x0nnn
+
+    // }
+}
+
+void decode_sig_8_codes(Chip8 *chip8, ushort x, ushort y, ushort opcode) {
+    ushort nibble = opcode & FOURTH_BIT;
+
+    switch (nibble)
+    {
+        case 0: // Vx = Vy
+            chip8->V[x] = chip8->V[y];
+            break;
+        case 1: // Vx = Vx OR Vy
+            chip8->V[x] = chip8->V[x] | chip8->V[y];
+            break;
+        case 2: // Vx = Vx AND Vy
+            chip8->V[x] = chip8->V[x] & chip8->V[y];
+            break;
+        case 3: // Vx = Vx XOR Vy
+            chip8->V[x] = chip8->V[x] ^ chip8->V[y];
+            break;
+        case 4: // Vx = Vx + Vy, Vf=1 if > 255
+
+            if (chip8->V[x] + chip8->V[y] > 255) {
+                chip8->V[VF] = 1;
+            } else {
+                chip8->V[VF] = 0;
+            }
+
+            chip8->V[x] += chip8->V[y];
+            break;
+        case 5: // Vx = Vx - Vy, Vf=1 if Vx > Vy
+            if (chip8->V[x] > chip8->V[y]) {
+                chip8->V[VF] = 1;
+            } else {
+                chip8->V[VF] = 0;
+            }
+
+            chip8->V[x] -= chip8->V[y];
+            break;
+    }
+}
+
+void decode_sig_E_codes(Chip8 *chip8, ushort x, ushort opcode) {
+}
+
+void decode_sig_F_codes(Chip8 *chip8, ushort x, ushort opcode) {
+}
+
+void draw(Chip8 *chip8, unsigned short opcode) {
+    unsigned short vx, vy, nibble;
+
+    vx = opcode & SECOND_BIT;
+    vy = opcode & THIRD_BIT;
+    nibble = opcode & FOURTH_BIT;
+}
+
+// 00E0 (clear screen) - v
+// 1NNN (jump) - v
+// 6XNN (set register VX) - v
+// 7XNN (add value to register VX) - v
+// ANNN (set index register I) - v
+// DXYN (display/draw)

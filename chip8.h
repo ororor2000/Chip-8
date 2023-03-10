@@ -18,6 +18,36 @@
 #define VE 14
 #define VF 15
 
+// and/or bits macro
+#define SIG_0 0x0000
+#define SIG_1 0x1000
+#define SIG_2 0x2000
+#define SIG_3 0x3000
+#define SIG_4 0x4000
+#define SIG_5 0x5000
+#define SIG_6 0x6000
+#define SIG_7 0x7000
+#define SIG_8 0x8000
+#define SIG_9 0x9000
+#define SIG_A 0xA000
+#define SIG_B 0xB000
+#define SIG_C 0xC000
+#define SIG_D 0xD000
+#define SIG_E 0xE000
+#define SIG_F 0xF000
+
+#define FIRST_BIT 0xF000
+#define SECOND_BIT 0x0F00
+#define THIRD_BIT 0x00F0
+#define FOURTH_BIT 0x000F
+
+#define TWO_RIGHTS_BITS 0x00FF
+#define THREE_RIGHT_BITS 0x0FFF
+#define FOUR_BITS 0xFFFF
+
+#define TRUE 1
+#define FALSE 0
+
 #define STACK_SIZE 16
 #define KEYPAD_SIZE 16
 
@@ -39,25 +69,29 @@
 
 #define SIZE(arr) sizeof(arr)/sizeof(arr[0])
 
+typedef unsigned short ushort;
+typedef unsigned char uchar;
+typedef int bool;
+
 typedef struct Chip8 {
-    unsigned short I;
-    unsigned short pc;
-    unsigned short sp;
-    unsigned short opcode;
-    unsigned char delay_timer;
-    unsigned char sound_timer;
+    ushort I;
+    ushort pc;
+    ushort sp;
+    ushort opcode;
+    uchar delay_timer;
+    uchar sound_timer;
 
-    unsigned char V[REG_SIZE];
-    unsigned char memory[MEM_SIZE];
+    uchar V[REG_SIZE];
+    uchar memory[MEM_SIZE];
 
-    unsigned short key[KEYPAD_SIZE];
-    unsigned short stack[STACK_SIZE];
+    ushort key[KEYPAD_SIZE];
+    ushort stack[STACK_SIZE];
 
-    unsigned char display[DISPLAY_SIZE];
+    uchar display[DISPLAY_SIZE];
 
 } Chip8;
 
-const unsigned char fontset[FONT_SIZE] = {
+const uchar fontset[FONT_SIZE] = {
 	0xF0, 0x90, 0x90, 0x90, 0xF0,		// 0
 	0x20, 0x60, 0x20, 0x20, 0x70,		// 1
 	0xF0, 0x10, 0xF0, 0x80, 0xF0,		// 2
