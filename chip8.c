@@ -94,7 +94,17 @@ int decode(Chip8 *chip8, ushort opcode) {
             decode_sig_8_codes(chip8, x, y, opcode);
         case SIG_A: // Annn
             chip8->I = opcode & THREE_RIGHT_BITS; // I = nnn
-            break;       
+            break;     
+        case SIG_B: // Bnnn
+            ushort nnn = opcode & THREE_RIGHT_BITS;
+            chip8->pc = nnn + chip8->V[V0]; // Jump to nnn + V0
+            jump = TRUE;
+            break;
+        case SIG_C: // Cxkk
+            ushort random  = rand() % 255;
+            ushort kk = opcode & TWO_RIGHTS_BITS;
+            chip8->V[x] = random & kk;
+            break;
         case SIG_E:
             decode_sig_E_codes(chip8, x, opcode);
             break;
@@ -104,7 +114,9 @@ int decode(Chip8 *chip8, ushort opcode) {
             return 2;
     }
 
-    if (!jump) {
+    // if a the opcode doesnt inclue the a jump command
+    // go to the next instruction
+    if (!jump) { 
         chip8->pc += 2;
     }
 }
