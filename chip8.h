@@ -45,6 +45,8 @@
 #define THREE_RIGHT_BITS 0x0FFF
 #define FOUR_BITS 0xFFFF
 
+#define BYTESCAN(N) (0x80 >> N) 
+
 #define TRUE 1
 #define FALSE 0
 
@@ -77,6 +79,8 @@ typedef int bool;
 
 
 typedef struct Chip8 {
+	bool draw;
+	
     ushort I;
     ushort pc;
     ushort sp;

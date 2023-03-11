@@ -3,6 +3,7 @@
 #include "chip8.h"
 
 void init_chip8(Chip8 *chip8, char *file_name) {
+    chip8->draw = 0;
     chip8->pc = ROM_START;    
     chip8->opcode = 0;
     chip8->I = 0;
@@ -130,7 +131,7 @@ int decode(Chip8 *chip8, ushort opcode) {
             chip8->V[x] = random & kk;
             break;        
         case SIG_D: // DXYN
-            draw(chip8, opcode);
+            draw(chip8, x, y, opcode);
         case SIG_E:
             decode_sig_E_codes(chip8, x, opcode);
             break;
@@ -205,6 +206,49 @@ void decode_sig_8_codes(Chip8 *chip8, ushort x, ushort y, ushort opcode) {
     }
 }
 
+// SIG_D
+void draw(Chip8 *chip8, ushort x, ushort y, ushort opcode) {
+    int x_pos, y_pos;
+    ushort height, pixel;
+    
+    height = opcode & FOURTH_BIT;
+
+    x_pos = chip8->V[x];
+    y_pos = chip8->V[y];
+
+    chip8->V[VF] = 0;
+
+    for (int yline = 0; yline < height; yline++) {
+        // getting the 8-bit pixel from memory
+        pixel = chip8->memory[chip8->I + yline];
+
+        for (int xline = 0; xline < 8; xline++) {
+            // scaning the byte bit by bit each iteration
+            ushort bit = pixel & BYTESCAN(xline);
+
+            // if the bit is 0, then,
+            // there's no need to draw it
+            if (bit == 0) {
+                continue;
+            }
+
+            // checking for collisions:
+            // since this part will execute if 'bit' is 0
+            // to detect collisions, we only need to check the display
+            if (chip8->display[x_pos + xline][y_pos + yline] == 1) {
+                // if a collision is detected,
+                // set Vf to 1
+                chip8->V[VF];
+            }
+
+            // draw(XOR) the bit to the display
+            chip8->display[x_pos + xline][y_pos + yline] ^= 1;
+        }
+    }
+
+    chip8->draw = 1;
+}
+
 void decode_sig_E_codes(Chip8 *chip8, ushort x, ushort opcode) {
     ushort nibble = opcode & FOURTH_BIT;
 
@@ -250,18 +294,3 @@ void decode_sig_F_codes(Chip8 *chip8, ushort x, ushort opcode) {
 
     }
 }
-
-void draw(Chip8 *chip8, unsigned short opcode) {
-    unsigned short vx, vy, nibble;
-
-    vx = opcode & SECOND_BIT;
-    vy = opcode & THIRD_BIT;
-    nibble = opcode & FOURTH_BIT;
-}
-
-// 00E0 (clear screen) - v
-// 1NNN (jump) - v
-// 6XNN (set register VX) - v
-// 7XNN (add value to register VX) - v
-// ANNN (set index register I) - v
-// DXYN (display/draw)
