@@ -62,6 +62,8 @@ int cycle(Chip8 *chip8) {
         --(chip8->sound_timer);
     }
 
+    // since each instruction is 2 2-byte long,
+    // we have to combine them
     ushort opcode = chip8->memory[chip8->pc] << 8 | chip8->memory[chip8->pc + 1];
     
     decode(chip8, opcode);
@@ -83,7 +85,7 @@ int decode(Chip8 *chip8, ushort opcode) {
         case SIG_1: // 1nnn
             chip8->pc = opcode & THREE_RIGHT_BITS; // JUMP: PC = nnn
             jump = TRUE;
-            break;
+            break;        
         case SIG_3: // 3xkk
             ushort kk = opcode & TWO_RIGHTS_BITS;
             if (chip8->V[x] == kk) { //if Vx == kk, pc += 2
@@ -126,12 +128,14 @@ int decode(Chip8 *chip8, ushort opcode) {
             ushort random  = rand() % 255; // random number from 0 to 255
             ushort kk = opcode & TWO_RIGHTS_BITS;
             chip8->V[x] = random & kk;
-            break;
+            break;        
+        case SIG_D: // DXYN
+            draw(chip8, opcode);
         case SIG_E:
             decode_sig_E_codes(chip8, x, opcode);
             break;
-        case SIG_D: // DXYN
-            draw(chip8, opcode);
+        case SIG_F:
+            decode_sig_F_codes(chip8, x, opcode);
         default:
             return 2;
     }
@@ -147,12 +151,19 @@ void decode_sig_0_codes(Chip8 *chip8, ushort opcode) {
     if (opcode == 0x00E0) {
         memset(chip8->display, 0, DISPLAY_SIZE);
     } 
-    // else if (opcode == 0x00EE) {
-    //     //
+    else if (opcode == 0x00EE) {
+        if (chip8->stack[chip8->sp] == 0) {
+            return;
+        }
         
-    // } else { // 0x0nnn
+        chip8->pc = chip8->stack[chip8->sp];
+        chip8->stack[chip8->sp] = 0;
 
-    // }
+        if (chip8->sp > 0) {
+            --(chip8->sp);
+        }        
+    }
+           
 }
 
 void decode_sig_8_codes(Chip8 *chip8, ushort x, ushort y, ushort opcode) {
@@ -205,6 +216,39 @@ void decode_sig_E_codes(Chip8 *chip8, ushort x, ushort opcode) {
 }
 
 void decode_sig_F_codes(Chip8 *chip8, ushort x, ushort opcode) {
+    ushort two_right_bits = opcode & TWO_RIGHTS_BITS;
+
+    switch (two_right_bits)
+    {
+        case 0x0007: // Fx07
+            chip8->V[x] = chip8->delay_timer; // Vx = delay timer
+            break;
+        // case 0x000A: // Fx0A
+        case 0x0015: // Fx0A
+            chip8->delay_timer = chip8->V[x]; // delay timer = Vx
+            break;
+        case 0x0018: // Fx18
+            chip8->sound_timer = chip8->V[x]; // sound timer = Vx
+            break;
+        case 0x001E: // Fx1E
+            chip8->I += chip8->V[x]; // I = I + Vx
+            break;
+        // case 0x0029: // Fx29
+        // case 0x0033: // Fx33
+        case 0x0055: // Fx55
+            for (int i = 0; i < x; i++) {
+                chip8->memory[chip8->I + i] = chip8->V[i];
+            }
+            chip8->I += x + 1;
+            break;
+        case 0x0065: // Fx65
+            for (int i = 0; i < x; i++) {
+                chip8->V[i] = chip8->memory[chip8->I + i];                
+            }
+            chip8->I += x + 1;
+            break;
+
+    }
 }
 
 void draw(Chip8 *chip8, unsigned short opcode) {
