@@ -85,7 +85,7 @@ void decode(Chip8 *chip8, ushort opcode) {
     ushort left_bit = chip8->opcode & FIRST_BIT;
     ushort x = (opcode & SECOND_BIT) >> 8;
     ushort y = (opcode & THIRD_BIT) >> 4;
-    ushort kk;
+    ushort kk, nnn, random;
 
     bool jump = FALSE;
 
@@ -131,12 +131,12 @@ void decode(Chip8 *chip8, ushort opcode) {
             chip8->I = opcode & THREE_RIGHT_BITS; // I = nnn
             break;     
         case SIG_B: // Bnnn
-            ushort nnn = opcode & THREE_RIGHT_BITS;
+            nnn = opcode & THREE_RIGHT_BITS;
             chip8->pc = nnn + chip8->V[V0]; // Jump to nnn + V0
             jump = TRUE;
             break;
         case SIG_C: // Cxkk
-            ushort random  = rand() % 255; // random number from 0 to 255
+            random  = rand() % 255; // random number from 0 to 255
             kk = opcode & TWO_RIGHTS_BITS;
             chip8->V[x] = random & kk;
             break;        
@@ -247,7 +247,7 @@ void draw(Chip8 *chip8, ushort x, ushort y, ushort opcode) {
             if (chip8->display[x_pos + xline][y_pos + yline] == 1) {
                 // if a collision is detected,
                 // set Vf to 1
-                chip8->V[VF];
+                chip8->V[VF] = 1;
             }
 
             // draw(XOR) the bit to the display

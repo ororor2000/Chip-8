@@ -1,5 +1,5 @@
-#include "chip8.h"
-#include <GL/glut.h>
+#include "emulator.h"
+#include <gl/glut.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -11,12 +11,6 @@
 
 Chip8 chip;
 
-
-void key_press(uchar key, int x, int y);
-void key_release(uchar key, int x, int y);
-
-void emulate_cycle();
-void idle();
 
 int main(int argc, char** argv) {
     srand(time(NULL));
@@ -53,7 +47,7 @@ int main(int argc, char** argv) {
 }
 
 void emulate_cycle() {
-	gClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
@@ -69,6 +63,8 @@ void emulate_cycle() {
 				draw_square((float)(i * 10), (float)(j * 10));
 			}
 		}
+
+		chip.draw = FALSE;
 	}
 
 	glutSwapBuffers();
@@ -88,7 +84,7 @@ void draw_square(float x, float y) {
 	glEnd();
 }
 
-void idle() {
+void idle() {	
 	glutPostRedisplay();
 }
 
@@ -160,7 +156,7 @@ void key_press(uchar key, int x, int y) {
         exit(0);
     }
 
-    int input;
+    int input = 0;
     key = decode_key(key);
 
     if (key < 0) {

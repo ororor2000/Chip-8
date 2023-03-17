@@ -104,3 +104,18 @@ const uchar fontset[FONT_SIZE] = {
 	0xF0, 0x80, 0xF0, 0x80, 0xF0,		// E
 	0xF0, 0x80, 0xF0, 0x80, 0x80		// F
 };
+
+
+int init_chip8(Chip8 *chip8, char *file_name);
+int load_rom(Chip8 *chip8, char* file_name);
+
+void set_key(Chip8 *chip8, int index, int pressed);
+
+void cycle(Chip8 *chip8);
+void decode(Chip8 *chip8, ushort opcode);
+
+void decode_sig_0_codes(Chip8 *chip8, ushort opcode);
+void decode_sig_8_codes(Chip8 *chip8, ushort x, ushort y, ushort opcode);
+void draw(Chip8 *chip8, ushort x, ushort y, ushort opcode);
+void decode_sig_E_codes(Chip8 *chip8, ushort x, ushort opcode);
+void decode_sig_F_codes(Chip8 *chip8, ushort x, ushort opcode);
