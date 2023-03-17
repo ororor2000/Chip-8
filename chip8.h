@@ -2,20 +2,6 @@
 #define REG_SIZE 16
 
 #define V0 0
-#define V1 1
-#define V2 2
-#define V3 3
-#define V4 4
-#define V5 5
-#define V6 6
-#define V7 7
-#define V8 8
-#define V9 9
-#define VA 10
-#define VB 11
-#define VC 12
-#define VD 13
-#define VE 14
 #define VF 15
 
 // and/or bits macro
@@ -44,6 +30,8 @@
 #define TWO_RIGHTS_BITS 0x00FF
 #define THREE_RIGHT_BITS 0x0FFF
 #define FOUR_BITS 0xFFFF
+
+#define MAX_8_BIT 0x00FF
 
 #define BYTESCAN(N) (0x80 >> N) 
 

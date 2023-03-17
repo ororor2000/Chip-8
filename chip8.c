@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "chip8.h"
 
-void init_chip8(Chip8 *chip8, char *file_name) {
+int init_chip8(Chip8 *chip8, char *file_name) {
     chip8->draw = 0;
     chip8->pc = ROM_START;    
     chip8->opcode = 0;
@@ -22,7 +23,11 @@ void init_chip8(Chip8 *chip8, char *file_name) {
         chip8->memory[i] = fontset[i];
     }
 
-    load_rom(chip8, file_name);
+    if (load_rom(chip8, file_name) != 0) {
+        return 1;
+    }
+
+    return 0;
 }
 
 int load_rom(Chip8 *chip8, char* file_name) {
@@ -54,7 +59,11 @@ int load_rom(Chip8 *chip8, char* file_name) {
     return 0;
 }
 
-int cycle(Chip8 *chip8) {
+void set_key(Chip8 *chip8, int index, int pressed) {
+    chip8->key[index] = pressed;
+}
+
+void cycle(Chip8 *chip8) {
     if (chip8->delay_timer > 0) {
         --(chip8->delay_timer);
     }
@@ -70,12 +79,13 @@ int cycle(Chip8 *chip8) {
     decode(chip8, opcode);
 }
 
-int decode(Chip8 *chip8, ushort opcode) {
+void decode(Chip8 *chip8, ushort opcode) {
     chip8->opcode = opcode;
 
     ushort left_bit = chip8->opcode & FIRST_BIT;
     ushort x = (opcode & SECOND_BIT) >> 8;
     ushort y = (opcode & THIRD_BIT) >> 4;
+    ushort kk;
 
     bool jump = FALSE;
 
@@ -88,13 +98,13 @@ int decode(Chip8 *chip8, ushort opcode) {
             jump = TRUE;
             break;        
         case SIG_3: // 3xkk
-            ushort kk = opcode & TWO_RIGHTS_BITS;
+            kk = opcode & TWO_RIGHTS_BITS;
             if (chip8->V[x] == kk) { //if Vx == kk, pc += 2
                 chip8->pc += 2;
             }
             break;
         case SIG_4: // 4xkk
-            ushort kk = opcode & TWO_RIGHTS_BITS;
+            kk = opcode & TWO_RIGHTS_BITS;
             if (chip8->V[x] != kk) { //if Vx != kk, pc += 2
                 chip8->pc += 2;
             }
@@ -127,7 +137,7 @@ int decode(Chip8 *chip8, ushort opcode) {
             break;
         case SIG_C: // Cxkk
             ushort random  = rand() % 255; // random number from 0 to 255
-            ushort kk = opcode & TWO_RIGHTS_BITS;
+            kk = opcode & TWO_RIGHTS_BITS;
             chip8->V[x] = random & kk;
             break;        
         case SIG_D: // DXYN
@@ -138,7 +148,7 @@ int decode(Chip8 *chip8, ushort opcode) {
         case SIG_F:
             decode_sig_F_codes(chip8, x, opcode);
         default:
-            return 2;
+            break;
     }
 
     // if a the opcode doesnt inclue the a jump command
@@ -164,7 +174,6 @@ void decode_sig_0_codes(Chip8 *chip8, ushort opcode) {
             --(chip8->sp);
         }        
     }
-           
 }
 
 void decode_sig_8_codes(Chip8 *chip8, ushort x, ushort y, ushort opcode) {
@@ -246,7 +255,7 @@ void draw(Chip8 *chip8, ushort x, ushort y, ushort opcode) {
         }
     }
 
-    chip8->draw = 1;
+    chip8->draw = TRUE;
 }
 
 void decode_sig_E_codes(Chip8 *chip8, ushort x, ushort opcode) {
