@@ -70,8 +70,8 @@ chip8_error_code_t chip8_decode_msb_3(chip8_t *chip8, ushort_t command, uchar_t 
     */
     uchar_t x, kk;
 
-    kk = CHIP8_LSB_MASK(2);
-    x = CHIP8_NIBBLE_MASK(3);
+    kk = command & CHIP8_LSB_MASK(2);
+    x = command & CHIP8_NIBBLE_MASK(3);
 
     CHIP8_ASSERT_VALID_REGISTER(chip8, x)
 
@@ -92,8 +92,8 @@ chip8_error_code_t chip8_decode_msb_4(chip8_t *chip8, ushort_t command, uchar_t 
     */
     uchar_t x, kk;
 
-    kk = CHIP8_LSB_MASK(2);
-    x = CHIP8_NIBBLE_MASK(3);
+    kk = command & CHIP8_LSB_MASK(2);
+    x = command & CHIP8_NIBBLE_MASK(3);
 
     CHIP8_ASSERT_VALID_REGISTER(chip8, x)
 
@@ -114,8 +114,8 @@ chip8_error_code_t chip8_decode_msb_5(chip8_t *chip8, ushort_t command, uchar_t 
     */
     uchar_t x, y;
 
-    y = CHIP8_NIBBLE_MASK(2);
-    x = CHIP8_NIBBLE_MASK(3);
+    y = command & CHIP8_NIBBLE_MASK(2);
+    x = command & CHIP8_NIBBLE_MASK(3);
 
     CHIP8_ASSERT_VALID_REGISTER(chip8, x)
     CHIP8_ASSERT_VALID_REGISTER(chip8, y)
@@ -136,8 +136,8 @@ chip8_error_code_t chip8_decode_msb_6(chip8_t *chip8, ushort_t command, uchar_t 
     */
     uchar_t x, kk;
 
-    kk = CHIP8_LSB_MASK(2);
-    x = CHIP8_NIBBLE_MASK(3);
+    kk = command & CHIP8_LSB_MASK(2);
+    x = command & CHIP8_NIBBLE_MASK(3);
 
     CHIP8_ASSERT_VALID_REGISTER(chip8, x)
 
@@ -156,8 +156,8 @@ chip8_error_code_t chip8_decode_msb_7(chip8_t *chip8, ushort_t command, uchar_t 
     */
     uchar_t x, kk;
 
-    kk = CHIP8_LSB_MASK(2);
-    x = CHIP8_NIBBLE_MASK(3);
+    kk = command & CHIP8_LSB_MASK(2);
+    x = command & CHIP8_NIBBLE_MASK(3);
 
     CHIP8_ASSERT_VALID_REGISTER(chip8, x)
 
@@ -170,9 +170,9 @@ chip8_error_code_t chip8_decode_msb_8(chip8_t *chip8, ushort_t command, uchar_t 
     uchar_t x, y, lsb;
     unsigned int add;
 
-    x = CHIP8_NIBBLE_MASK(3);
-    y = CHIP8_NIBBLE_MASK(2);
-    lsb = CHIP8_NIBBLE_MASK(1);
+    x = command & CHIP8_NIBBLE_MASK(3);
+    y = command & CHIP8_NIBBLE_MASK(2);
+    lsb = command & CHIP8_NIBBLE_MASK(1);
 
     CHIP8_ASSERT_VALID_REGISTER(chip8, x)
     CHIP8_ASSERT_VALID_REGISTER(chip8, y)
@@ -243,12 +243,8 @@ chip8_error_code_t chip8_decode_msb_8(chip8_t *chip8, ushort_t command, uchar_t 
     */
     case 0x4:
         add = CHIP8_Vx(chip8, x) + CHIP8_Vx(chip8, y);
-        if (add > 255) {
-            CHIP8_VF(chip8) = 1;
-        } else {
-            CHIP8_VF(chip8) = 0;
-        }
 
+        CHIP8_VF(chip8) = add > 255;
         CHIP8_Vx(chip8, x) = add & CHIP8_LOWER_8_BITS_MASK;
         break;
 
@@ -261,7 +257,8 @@ chip8_error_code_t chip8_decode_msb_8(chip8_t *chip8, ushort_t command, uchar_t 
     and the results stored in Vx.
     */
     case 0x5:
-        /* code */
+        CHIP8_VF(chip8) = CHIP8_Vx(chip8, x) > CHIP8_Vx(chip8, y);
+        CHIP8_Vx(chip8, x) = CHIP8_Vx(chip8, x) - CHIP8_Vx(chip8, y);
         break;
 
     /*
@@ -273,7 +270,8 @@ chip8_error_code_t chip8_decode_msb_8(chip8_t *chip8, ushort_t command, uchar_t 
     Then Vx is divided by 2.
     */
     case 0x6:
-        /* code */
+        CHIP8_VF(chip8) = CHIP8_Vx(chip8, x) & 0x01;
+        CHIP8_Vx(chip8, x) = CHIP8_Vx(chip8, x) >> 1;
         break;
 
     /*
@@ -285,17 +283,21 @@ chip8_error_code_t chip8_decode_msb_8(chip8_t *chip8, ushort_t command, uchar_t 
     and the results stored in Vx.
     */
     case 0x7:
-        /* code */
+        CHIP8_VF(chip8) = CHIP8_Vx(chip8, y) > CHIP8_Vx(chip8, x);
+        CHIP8_Vx(chip8, x) = CHIP8_Vx(chip8, y) - CHIP8_Vx(chip8, x);
         break;
 
     /*
     8xyE - SHL Vx {, Vy}
     Set Vx = Vx SHL 1.
 
-    If the most-significant bit of Vx is 1, then VF is set to 1, otherwise to 0. Then Vx is multiplied by 2.
+    If the most-significant bit of Vx is 1,
+    then VF is set to 1, otherwise to 0.
+    Then Vx is multiplied by 2.
     */
     case 0xE:
-        /* code */
+        CHIP8_VF(chip8) = (CHIP8_Vx(chip8, x) >> 7) & 0x01;
+        CHIP8_Vx(chip8, x) = CHIP8_Vx(chip8, x) << 2;
         break;
 
     default:
@@ -315,8 +317,8 @@ chip8_error_code_t chip8_decode_msb_9(chip8_t *chip8, ushort_t command, uchar_t 
     */
     uchar_t x, y;
 
-    y = CHIP8_NIBBLE_MASK(2);
-    x = CHIP8_NIBBLE_MASK(3);
+    y = command & CHIP8_NIBBLE_MASK(2);
+    x = command & CHIP8_NIBBLE_MASK(3);
 
     CHIP8_ASSERT_VALID_REGISTER(chip8, x)
     CHIP8_ASSERT_VALID_REGISTER(chip8, y)
@@ -363,8 +365,8 @@ chip8_error_code_t chip8_decode_msb_C(chip8_t *chip8, ushort_t command, uchar_t 
     uchar_t x, kk;
 
     srand(time(NULL));
-    kk = CHIP8_LSB_MASK(2);
-    x = CHIP8_NIBBLE_MASK(3);
+    kk = command & CHIP8_LSB_MASK(2);
+    x = command & CHIP8_NIBBLE_MASK(3);
 
     CHIP8_ASSERT_VALID_REGISTER(chip8, x)
 
@@ -389,15 +391,20 @@ chip8_error_code_t chip8_decode_msb_D(chip8_t *chip8, ushort_t command, uchar_t 
     and section 2.4, Display, for more information on the Chip-8 screen and sprites.
     */
 
-   uchar_t x, y, n;
+   uchar_t x, y, n, x_pos, y_pos, pixel;
 
-   x = CHIP8_NIBBLE_MASK(3);
-   y = CHIP8_NIBBLE_MASK(2);
-   n = CHIP8_NIBBLE_MASK(1);
+   x = command & CHIP8_NIBBLE_MASK(3);
+   y = command & CHIP8_NIBBLE_MASK(2);
+   n = command & CHIP8_NIBBLE_MASK(1);
 
    CHIP8_ASSERT_VALID_REGISTER(chip8, x)
    CHIP8_ASSERT_VALID_REGISTER(chip8, y)
 
+   x_pos = CHIP8_Vx(chip8, x);
+   y_pos = CHIP8_Vx(chip8, y);
+
+    /* Reset collision register to 0 */
+   CHIP8_VF(chip8) = 0;
     /*
     TODO:
     */
@@ -407,7 +414,7 @@ chip8_error_code_t chip8_decode_msb_D(chip8_t *chip8, ushort_t command, uchar_t 
 chip8_error_code_t chip8_decode_msb_E(chip8_t *chip8, ushort_t command, uchar_t opcode)  {
     uchar_t x;
 
-    x = CHIP8_NIBBLE_MASK(3);
+    x = command & CHIP8_NIBBLE_MASK(3);
 
     CHIP8_ASSERT_VALID_REGISTER(chip8, x)
     CHIP8_ASSERT_VALID_KEY(chip8, chip8->registers[x])
