@@ -67,6 +67,7 @@ static chip8_error_code_t chip8_fetch_decode_execute(chip8_t *chip8) {
     chip8_error_code_t err;
     ushort_t command;
     uchar_t opcode;
+    int jump = 0;
 
     /* get the first half of the instruction and left shift it by 8 */
     command = CHIP8_MEM(chip8, chip8->program_counter) << 8;
@@ -82,7 +83,10 @@ static chip8_error_code_t chip8_fetch_decode_execute(chip8_t *chip8) {
 
     err = handlers[opcode](chip8, command, opcode);
 
-    chip8->program_counter += 2;
+    if (!jump) {
+        chip8->program_counter += 2;
+    }
+
     return err;
 }
 

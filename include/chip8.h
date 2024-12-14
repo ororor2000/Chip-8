@@ -15,10 +15,15 @@
 
 #define CHIP8_MEM(chip8, index)  chip8->memory[index]
 
-#define CHIP8_OPCODE_MASK        0xF000
+#define CHIP8_OPCODE_MASK       (0xF000)
+#define CHIP8_LOWER_8_BITS_MASK (0xFF)
 
 #define CHIP8_LSB_MASK(index)    (((1 << ((index) * 4)) - 1))
 #define CHIP8_NIBBLE_MASK(index) ((0xF) << ((index - 1) * 4))
+
+#define CHIP8_Vx(chip8, x)       chip8->registers[x]
+#define CHIP8_V0(chip8)          CHIP8_Vx(chip8, 0)
+#define CHIP8_VF(chip8)          CHIP8_Vx(chip8, 0xF0)
 
 #define CHIP8_STACK_TOP(chip8)   chip8->stack[chip8->stack_pointer]
 #define CHIP8_ASSERT_SP_VALID(chip8)  \

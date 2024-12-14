@@ -75,7 +75,7 @@ chip8_error_code_t chip8_decode_msb_3(chip8_t *chip8, ushort_t command, uchar_t 
 
     CHIP8_ASSERT_VALID_REGISTER(chip8, x)
 
-    if (chip8->registers[x] == kk) {
+    if (CHIP8_Vx(chip8, x) == kk) {
         chip8->program_counter += 2;
     }
 
@@ -97,7 +97,7 @@ chip8_error_code_t chip8_decode_msb_4(chip8_t *chip8, ushort_t command, uchar_t 
 
     CHIP8_ASSERT_VALID_REGISTER(chip8, x)
 
-    if (chip8->registers[x] != kk) {
+    if (CHIP8_Vx(chip8, x) != kk) {
         chip8->program_counter += 2;
     }
 
@@ -120,7 +120,7 @@ chip8_error_code_t chip8_decode_msb_5(chip8_t *chip8, ushort_t command, uchar_t 
     CHIP8_ASSERT_VALID_REGISTER(chip8, x)
     CHIP8_ASSERT_VALID_REGISTER(chip8, y)
 
-    if (chip8->registers[x] != chip8->registers[y]) {
+    if (CHIP8_Vx(chip8, x) != CHIP8_Vx(chip8, y)) {
         chip8->program_counter += 2;
     }
 
@@ -141,7 +141,7 @@ chip8_error_code_t chip8_decode_msb_6(chip8_t *chip8, ushort_t command, uchar_t 
 
     CHIP8_ASSERT_VALID_REGISTER(chip8, x)
 
-    chip8->registers[x] = kk;
+    CHIP8_Vx(chip8, x) = kk;
 
     return CHIP8_OK;
 }
@@ -161,13 +161,14 @@ chip8_error_code_t chip8_decode_msb_7(chip8_t *chip8, ushort_t command, uchar_t 
 
     CHIP8_ASSERT_VALID_REGISTER(chip8, x)
 
-    chip8->registers[x] += kk;
+    CHIP8_Vx(chip8, x) += kk;
 
     return CHIP8_OK;
 }
 
 chip8_error_code_t chip8_decode_msb_8(chip8_t *chip8, ushort_t command, uchar_t opcode)  {
     uchar_t x, y, lsb;
+    unsigned int add;
 
     x = CHIP8_NIBBLE_MASK(3);
     y = CHIP8_NIBBLE_MASK(2);
@@ -185,7 +186,7 @@ chip8_error_code_t chip8_decode_msb_8(chip8_t *chip8, ushort_t command, uchar_t 
     Stores the value of register Vy in register Vx.
     */
     case 0x0:
-        chip8->registers[x] = chip8->registers[y];
+        CHIP8_Vx(chip8, x) = CHIP8_Vx(chip8, y);
         break;
 
     /*
@@ -199,7 +200,7 @@ chip8_error_code_t chip8_decode_msb_8(chip8_t *chip8, ushort_t command, uchar_t 
     Otherwise, it is 0.
     */
     case 0x1:
-        /* code */
+        CHIP8_Vx(chip8, x) = CHIP8_Vx(chip8, x) | CHIP8_Vx(chip8, y);
         break;
 
     /*
@@ -213,7 +214,7 @@ chip8_error_code_t chip8_decode_msb_8(chip8_t *chip8, ushort_t command, uchar_t 
     Otherwise, it is 0.
     */
     case 0x2:
-        /* code */
+        CHIP8_Vx(chip8, x) = CHIP8_Vx(chip8, x) & CHIP8_Vx(chip8, y);
         break;
 
     /*
@@ -228,7 +229,7 @@ chip8_error_code_t chip8_decode_msb_8(chip8_t *chip8, ushort_t command, uchar_t 
     Otherwise, it is 0.
     */
     case 0x3:
-        /* code */
+        CHIP8_Vx(chip8, x) = CHIP8_Vx(chip8, x) ^ CHIP8_Vx(chip8, y);
         break;
 
     /*
@@ -241,7 +242,14 @@ chip8_error_code_t chip8_decode_msb_8(chip8_t *chip8, ushort_t command, uchar_t 
     and stored in Vx.
     */
     case 0x4:
-        /* code */
+        add = CHIP8_Vx(chip8, x) + CHIP8_Vx(chip8, y);
+        if (add > 255) {
+            CHIP8_VF(chip8) = 1;
+        } else {
+            CHIP8_VF(chip8) = 0;
+        }
+
+        CHIP8_Vx(chip8, x) = add & CHIP8_LOWER_8_BITS_MASK;
         break;
 
     /*
@@ -313,7 +321,7 @@ chip8_error_code_t chip8_decode_msb_9(chip8_t *chip8, ushort_t command, uchar_t 
     CHIP8_ASSERT_VALID_REGISTER(chip8, x)
     CHIP8_ASSERT_VALID_REGISTER(chip8, y)
 
-    if (chip8->registers[x] != chip8->registers[y]) {
+    if (CHIP8_Vx(chip8, x) != CHIP8_Vx(chip8, y)) {
         chip8->program_counter += 2;
     }
 
@@ -338,7 +346,7 @@ chip8_error_code_t chip8_decode_msb_B(chip8_t *chip8, ushort_t command, uchar_t 
 
     The program counter is set to nnn plus the value of V0.
     */
-    chip8->program_counter = chip8->registers[0] + (command & CHIP8_LSB_MASK(3));
+    chip8->program_counter = CHIP8_V0(chip8) + (command & CHIP8_LSB_MASK(3));
     return CHIP8_OK;
 }
 
@@ -360,7 +368,7 @@ chip8_error_code_t chip8_decode_msb_C(chip8_t *chip8, ushort_t command, uchar_t 
 
     CHIP8_ASSERT_VALID_REGISTER(chip8, x)
 
-    chip8->registers[x] = (rand() % 256) & kk;
+    CHIP8_Vx(chip8, x) = (rand() % 256) & kk;
 
     return CHIP8_OK;
 }
@@ -413,7 +421,7 @@ chip8_error_code_t chip8_decode_msb_E(chip8_t *chip8, ushort_t command, uchar_t 
     PC is increased by 2.
     */
     if (command & CHIP8_LSB_MASK(2) == 0x009E) {
-        if (chip8->keypad_state[chip8->registers[x]] == CHIP8_KEY_PRESSED) {
+        if (chip8->keypad_state[CHIP8_Vx(chip8, x)] == CHIP8_KEY_PRESSED) {
             chip8->program_counter += 2;
         }
     }
@@ -424,7 +432,7 @@ chip8_error_code_t chip8_decode_msb_E(chip8_t *chip8, ushort_t command, uchar_t 
     Checks the
     */
     else if (command & CHIP8_LSB_MASK(2) == 0x00A1) {
-        if (chip8->keypad_state[chip8->registers[x]] != CHIP8_KEY_IDLE) {
+        if (chip8->keypad_state[CHIP8_Vx(chip8, x)] != CHIP8_KEY_IDLE) {
             chip8->program_counter += 2;
         }
     }
