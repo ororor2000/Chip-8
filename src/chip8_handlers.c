@@ -22,9 +22,8 @@ chip8_error_code_t chip8_decode_msb_0(chip8_t *chip8, ushort_t command, uchar_t 
     then subtracts 1 from the stack pointer.
     */
     else if (command == 0x00EE) {
-        if (chip8->stack_pointer < 0 || chip8->stack_pointer >= sizeof(chip8->stack)) {
-            return CHIP8_STACK_PTR_NOT_IN_RANGE_ERR;
-        }
+        CHIP8_ASSERT_SP_VALID(chip8)
+
         chip8->program_counter = chip8->stack[chip8->stack_pointer];
         chip8->stack_pointer--;
     }
@@ -53,6 +52,8 @@ chip8_error_code_t chip8_decode_msb_2(chip8_t *chip8, ushort_t command, uchar_t 
     The PC is then set to nnn.
     */
     chip8->stack_pointer++;
+    CHIP8_ASSERT_SP_VALID(chip8)
+
     CHIP8_STACK_TOP(chip8) = chip8->program_counter;
     chip8->program_counter = command & CHIP8_LSB_MASK(3);
 
@@ -71,6 +72,8 @@ chip8_error_code_t chip8_decode_msb_3(chip8_t *chip8, ushort_t command, uchar_t 
 
     kk = CHIP8_LSB_MASK(2);
     x = CHIP8_NIBBLE_MASK(3);
+
+    CHIP8_ASSERT_VALID_REGISTER(chip8, x)
 
     if (chip8->registers[x] == kk) {
         chip8->program_counter += 2;
@@ -92,6 +95,8 @@ chip8_error_code_t chip8_decode_msb_4(chip8_t *chip8, ushort_t command, uchar_t 
     kk = CHIP8_LSB_MASK(2);
     x = CHIP8_NIBBLE_MASK(3);
 
+    CHIP8_ASSERT_VALID_REGISTER(chip8, x)
+
     if (chip8->registers[x] != kk) {
         chip8->program_counter += 2;
     }
@@ -112,6 +117,9 @@ chip8_error_code_t chip8_decode_msb_5(chip8_t *chip8, ushort_t command, uchar_t 
     y = CHIP8_NIBBLE_MASK(2);
     x = CHIP8_NIBBLE_MASK(3);
 
+    CHIP8_ASSERT_VALID_REGISTER(chip8, x)
+    CHIP8_ASSERT_VALID_REGISTER(chip8, y)
+
     if (chip8->registers[x] != chip8->registers[y]) {
         chip8->program_counter += 2;
     }
@@ -131,6 +139,8 @@ chip8_error_code_t chip8_decode_msb_6(chip8_t *chip8, ushort_t command, uchar_t 
     kk = CHIP8_LSB_MASK(2);
     x = CHIP8_NIBBLE_MASK(3);
 
+    CHIP8_ASSERT_VALID_REGISTER(chip8, x)
+
     chip8->registers[x] = kk;
 
     return CHIP8_OK;
@@ -149,6 +159,8 @@ chip8_error_code_t chip8_decode_msb_7(chip8_t *chip8, ushort_t command, uchar_t 
     kk = CHIP8_LSB_MASK(2);
     x = CHIP8_NIBBLE_MASK(3);
 
+    CHIP8_ASSERT_VALID_REGISTER(chip8, x)
+
     chip8->registers[x] += kk;
 
     return CHIP8_OK;
@@ -160,6 +172,9 @@ chip8_error_code_t chip8_decode_msb_8(chip8_t *chip8, ushort_t command, uchar_t 
     x = CHIP8_NIBBLE_MASK(3);
     y = CHIP8_NIBBLE_MASK(2);
     lsb = CHIP8_NIBBLE_MASK(1);
+
+    CHIP8_ASSERT_VALID_REGISTER(chip8, x)
+    CHIP8_ASSERT_VALID_REGISTER(chip8, y)
 
     switch (lsb)
     {
@@ -295,6 +310,9 @@ chip8_error_code_t chip8_decode_msb_9(chip8_t *chip8, ushort_t command, uchar_t 
     y = CHIP8_NIBBLE_MASK(2);
     x = CHIP8_NIBBLE_MASK(3);
 
+    CHIP8_ASSERT_VALID_REGISTER(chip8, x)
+    CHIP8_ASSERT_VALID_REGISTER(chip8, y)
+
     if (chip8->registers[x] != chip8->registers[y]) {
         chip8->program_counter += 2;
     }
@@ -340,6 +358,8 @@ chip8_error_code_t chip8_decode_msb_C(chip8_t *chip8, ushort_t command, uchar_t 
     kk = CHIP8_LSB_MASK(2);
     x = CHIP8_NIBBLE_MASK(3);
 
+    CHIP8_ASSERT_VALID_REGISTER(chip8, x)
+
     chip8->registers[x] = (rand() % 256) & kk;
 
     return CHIP8_OK;
@@ -367,6 +387,9 @@ chip8_error_code_t chip8_decode_msb_D(chip8_t *chip8, ushort_t command, uchar_t 
    y = CHIP8_NIBBLE_MASK(2);
    n = CHIP8_NIBBLE_MASK(1);
 
+   CHIP8_ASSERT_VALID_REGISTER(chip8, x)
+   CHIP8_ASSERT_VALID_REGISTER(chip8, y)
+
     /*
     TODO:
     */
@@ -377,6 +400,9 @@ chip8_error_code_t chip8_decode_msb_E(chip8_t *chip8, ushort_t command, uchar_t 
     uchar_t x;
 
     x = CHIP8_NIBBLE_MASK(3);
+
+    CHIP8_ASSERT_VALID_REGISTER(chip8, x)
+    CHIP8_ASSERT_VALID_KEY(chip8, chip8->registers[x])
 
     /*
     Ex9E - SKP Vx

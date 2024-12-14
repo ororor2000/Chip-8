@@ -21,6 +21,21 @@
 #define CHIP8_NIBBLE_MASK(index) ((0xF) << ((index - 1) * 4))
 
 #define CHIP8_STACK_TOP(chip8)   chip8->stack[chip8->stack_pointer]
+#define CHIP8_ASSERT_SP_VALID(chip8)  \
+        if (chip8->stack_pointer < 0 || chip8->stack_pointer >= sizeof(chip8->stack) / sizeof(uchar_t)) { \
+            return CHIP8_INVALID_STACK_PTR_ERR; \
+        }
+
+#define CHIP8_ASSERT_VALID_REGISTER(chip8, r) \
+        if (r < 0 && r >= sizeof(chip8->registers) / sizeof(uchar_t)) { \
+            return CHIP8_INVALID_REGISTER_ERR; \
+        }
+
+#define CHIP8_ASSERT_VALID_KEY(chip8, k) \
+        if (k < 0 && k >= sizeof(chip8->keypad_state) / sizeof(uchar_t)) { \
+            return CHIP8_INVALID_KEY_ERR; \
+        }
+
 
 typedef unsigned char uchar_t;
 typedef unsigned short ushort_t;
@@ -40,7 +55,9 @@ typedef enum {
     CHIP8_DECODE_ERR,
     CHIP8_ROM_ERR,
     CHIP8_OPCODE_ERR,
-    CHIP8_STACK_PTR_NOT_IN_RANGE_ERR,
+    CHIP8_INVALID_STACK_PTR_ERR,
+    CHIP8_INVALID_REGISTER_ERR,
+    CHIP8_INVALID_KEY_ERR,
     CHIP8_ERR,
     CHIP8_MAX, /* must be last one */
 } chip8_error_code_t;
