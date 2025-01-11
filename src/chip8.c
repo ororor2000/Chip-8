@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <time.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 
-#include "include/chip8.h"
-#include "include/chip8_handlers.h"
+#include "chip8.h"
+#include "chip8_handlers.h"
 
 decode_handler handlers[] = {
     [0x00] = chip8_decode_msb_0,
@@ -33,27 +34,25 @@ static chip8_error_code_t chip8_load_rom(chip8_t *chip8, const char* rom_file) {
     if (stat(rom_file, &st) != 0) {
         return CHIP8_ROM_ERR;
     }
-
+    printf("rom size: %lld\n", st.st_size);
     if (st.st_size > CHIP8_MAX_ROM_SIZE) {
         return CHIP8_ROM_TOO_BIG_ERR;
     }
 
-    fd = fopen(rom_file, O_RDONLY);
+    fd = fopen(rom_file, "r");
     if (fd == NULL) {
         return CHIP8_ROM_ERR;
     }
 
-    if (fread(chip8->memory[CHIP8_ROM_START], 1, st.st_size, fd) != st.st_size) {
+    if (fread(&chip8->memory[CHIP8_ROM_START], 1, st.st_size, fd) != st.st_size) {
         err = CHIP8_ROM_READ_ERR;
     }
 
     fclose(fd);
+    return CHIP8_OK;
 }
 
 chip8_error_code_t chip8_init(chip8_t *chip8, const char* rom_file) {
-    /* used to avoid potential memory leaks */
-    free(chip8);
-
     chip8 = calloc(1, sizeof(chip8_t));
     if (chip8 == NULL) {
         return CHIP8_ALLOC_ERR;
@@ -101,19 +100,4 @@ chip8_error_code_t chip8_cycle(chip8_t *chip8) {
 void chip8_cleanup(chip8_t *chip8) {
     free(chip8);
     /* TODO: */
-}
-
-
-int main(int argc, char **argv) {
-    int err;
-    chip8_t *chip8 = NULL;
-
-    err = init_chip8(chip8, "");
-    if (err != CHIP8_OK) {
-        fprintf(stderr, "failed to init chip8, error: %d", err);
-        goto out;
-    }
-
-out:
-    chip8_cleanup(chip8);
 }

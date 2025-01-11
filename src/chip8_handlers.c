@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "include/chip8_handlers.h"
-#include "include/chip8.h"
+#include "chip8_handlers.h"
+#include "chip8.h"
 
 
 chip8_error_code_t chip8_decode_msb_0(chip8_t *chip8, ushort_t command, uchar_t opcode)  {
@@ -427,7 +427,7 @@ chip8_error_code_t chip8_decode_msb_E(chip8_t *chip8, ushort_t command, uchar_t 
     and if the key corresponding to the value of Vx is currently in the down position,
     PC is increased by 2.
     */
-    if (command & CHIP8_LSB_MASK(2) == 0x009E) {
+    if ((command & CHIP8_LSB_MASK(2)) == 0x009E) {
         if (chip8->keypad_state[CHIP8_Vx(chip8, x)] == CHIP8_KEY_PRESSED) {
             chip8->program_counter += 2;
         }
@@ -438,7 +438,7 @@ chip8_error_code_t chip8_decode_msb_E(chip8_t *chip8, ushort_t command, uchar_t 
 
     Checks the
     */
-    else if (command & CHIP8_LSB_MASK(2) == 0x00A1) {
+    else if ((command & CHIP8_LSB_MASK(2)) == 0x00A1) {
         if (chip8->keypad_state[CHIP8_Vx(chip8, x)] != CHIP8_KEY_IDLE) {
             chip8->program_counter += 2;
         }

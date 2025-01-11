@@ -1,7 +1,7 @@
 #ifndef __CHIP8_HANDLERS_H__
 #define __CHIP8_HANDLERS_H__
 
-#include "include/chip8.h"
+#include "chip8.h"
 
 chip8_error_code_t chip8_decode_msb_0(chip8_t *chip8, ushort_t command, uchar_t opcode);
 chip8_error_code_t chip8_decode_msb_1(chip8_t *chip8, ushort_t command, uchar_t opcode);
