@@ -46,6 +46,11 @@ add_executable(chip8_tests ${CHIP8_TESTS_SRCS})
 
 target_include_directories(chip8_tests PUBLIC src)
 
+target_link_options(chip8_tests PRIVATE
+    -Wl,-wrap=srand
+    -Wl,-wrap=time
+)
+
 # Link Unit Tests with cmocka
 target_link_libraries(chip8_tests cmocka)
 
