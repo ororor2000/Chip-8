@@ -80,6 +80,7 @@ typedef enum
 
 typedef struct
 {
+    uint8_t draw: 1;
     ushort_t program_counter;
     ushort_t stack_pointer;
     ushort_t i_register;

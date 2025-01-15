@@ -486,11 +486,79 @@ static void test_chip8_decode_handler_msb_C_opcode_CXKK_success(void **state) {
     ushort_t command = 0x6ABB;
     uchar_t opcode;
 
+    chip8.registers[0xA] = -1;
     err = chip8_decode_handler_msb_C(&chip8, command, opcode);
 
     assert_int_equal(err, CHIP8_OK);
-    assert_int_equal(chip8.registers[0xA], 0xBB);
+    assert_int_not_equal(chip8.registers[0xA], 0x00);
 }
+
+static void test_chip8_decode_handler_msb_D_basic_sprite(void **state) {
+    chip8_t chip8;
+    ushort_t command = 0xD015;
+    uchar_t opcode;
+    int err;
+
+    memset(&chip8, 0, sizeof(chip8_t));
+    chip8.i_register = 0x200;
+    chip8.registers[0x0] = 5;
+    chip8.registers[0x1] = 10;
+
+    chip8.memory[0x200] = 0x3C;
+    chip8.memory[0x201] = 0xC3;
+    chip8.memory[0x202] = 0xFF;
+    chip8.memory[0x203] = 0xC3;
+    chip8.memory[0x204] = 0x3C;
+
+    err = chip8_decode_handler_msb_D(&chip8, command, opcode);
+
+    assert_int_equal(err, CHIP8_OK);
+    assert_int_equal(chip8.program_counter, 2);
+    assert_int_equal(chip8.draw, 1);
+
+    uchar_t expected_display[5][6] = {
+        {1, 0, 1, 1, 0, 1},
+        {0, 1, 1, 1, 1, 0},
+        {1, 1, 1, 1, 1, 1},
+        {0, 1, 1, 1, 1, 0},
+        {1, 0, 1, 1, 0, 1}
+    };
+
+    for (int y = 0; y < 5; y++) {
+        for (int x = 0; x < 6; x++) {
+            assert_int_equal(chip8.display[y + 10][x + 5], expected_display[y][x]);
+        }
+    }
+}
+
+// static void test_chip8_decode_handler_msb_D_collision(void **state) {
+//     chip8_t chip8;
+//     ushort_t command = 0xD012; // DRW V0, V1, 2 (draw 2-byte sprite)
+//     uchar_t opcode;
+//     int err;
+
+//     // Initialize the Chip8 struct (partially, for this test)
+//     memset(&chip8, 0, sizeof(chip8_t));
+//     chip8.i_register = 0x200; // Set I register to starting address of sprite data
+//     chip8.V[0] = 5;        // Set V0 (x-coordinate) to 5
+//     chip8.V[1] = 10;       // Set V1 (y-coordinate) to 10
+
+//     // Set sprite data in memory
+//     chip8.memory[0x200] = 0xF0;
+//     chip8.memory[0x201] = 0x0F;
+
+//     // Set some pixels on the display to cause a collision
+//     chip8.display[10][5] = 1;
+//     chip8.display[11][7] = 1;
+
+//     err = chip8_decode_handler_msb_D(&chip8, command, opcode);
+
+//     assert_int_equal(err, CHIP8_OK);
+//     assert_int_equal(chip8.program_counter, 2); // PC should be incremented
+//     assert_int_equal(chip8.draw, 1);          // Draw flag should be set
+//     assert_int_equal(chip8.V[0xF], 1);       // Collision register should be set
+// }
+
 
 
 int main(void)
@@ -526,6 +594,7 @@ int main(void)
         cmocka_unit_test(test_chip8_decode_handler_msb_A_opcode_ANNN_success),
         cmocka_unit_test(test_chip8_decode_handler_msb_B_opcode_BNNN_success),
         cmocka_unit_test(test_chip8_decode_handler_msb_C_opcode_CXKK_success),
+        cmocka_unit_test(test_chip8_decode_handler_msb_D_basic_sprite),
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);

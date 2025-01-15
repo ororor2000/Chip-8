@@ -374,7 +374,7 @@ chip8_error_code_t chip8_decode_handler_msb_B(chip8_t *chip8, ushort_t command, 
     chip8->program_counter = CHIP8_V0(chip8) + (command & CHIP8_LSB_MASK(3));
     return CHIP8_OK;
 }
-
+#include <stdio.h>
 chip8_error_code_t chip8_decode_handler_msb_C(chip8_t *chip8, ushort_t command, uchar_t opcode)  {
     CHIP8_ASSERT_PTR(chip8);
 
@@ -391,7 +391,7 @@ chip8_error_code_t chip8_decode_handler_msb_C(chip8_t *chip8, ushort_t command, 
 
     srand(time(NULL));
     kk = command & CHIP8_LSB_MASK(2);
-    x = command & CHIP8_NIBBLE_MASK(3);
+    x = CHIP8_NIBBLE(command, 3);
 
     CHIP8_ASSERT_VALID_REGISTER(chip8, x)
 
@@ -417,24 +417,39 @@ chip8_error_code_t chip8_decode_handler_msb_D(chip8_t *chip8, ushort_t command, 
      * See instruction 8xy3 for more information on XOR,
      * and section 2.4, Display, for more information on the Chip-8 screen and sprites.
      */
-   uchar_t x, y, n, x_pos, y_pos, pixel;
+    uchar_t x, y, n, x_pos, y_pos, pixel;
 
-   x = command & CHIP8_NIBBLE_MASK(3);
-   y = command & CHIP8_NIBBLE_MASK(2);
-   n = command & CHIP8_NIBBLE_MASK(1);
+    x = CHIP8_NIBBLE(command, 3);
+    y = CHIP8_NIBBLE(command, 2);
+    n = CHIP8_NIBBLE(command, 1);
 
-   CHIP8_ASSERT_VALID_REGISTER(chip8, x)
-   CHIP8_ASSERT_VALID_REGISTER(chip8, y)
+    CHIP8_ASSERT_VALID_REGISTER(chip8, x);
+    CHIP8_ASSERT_VALID_REGISTER(chip8, y);
 
-   x_pos = CHIP8_Vx(chip8, x);
-   y_pos = CHIP8_Vx(chip8, y);
+    x_pos = CHIP8_Vx(chip8, x);
+    y_pos = CHIP8_Vx(chip8, y);
 
-    /* Reset collision register to 0 */
-   CHIP8_VF(chip8) = 0;
-    /*
-    TODO:
-    */
-   return CHIP8_OK;
+    CHIP8_VF(chip8) = 0;
+
+    for (int y_line = 0; y_line < n; y_line++) {
+        pixel = chip8->memory[chip8->i_register + y_line];
+        for (int x_line = 0; x_line < 8; x_line++) {
+            if ((pixel & (0x80 >> x_line)) != 0) {
+                uint8_t screen_x = (x_pos + x_line) % CHIP8_DISPLAY_WIDTH;
+                uint8_t screen_y = (y_pos + y_line) % CHIP8_DISPLAY_HEIGHT;
+
+                if (chip8->display[screen_y][screen_x] == 1) {
+                    CHIP8_VF(chip8) = 1;
+                }
+                chip8->display[screen_y][screen_x] ^= 1;
+            }
+        }
+    }
+
+    chip8->draw = 1;
+    chip8->program_counter += 2;
+
+    return CHIP8_OK;
 }
 
 chip8_error_code_t chip8_decode_handler_msb_E(chip8_t *chip8, ushort_t command, uchar_t opcode)  {
@@ -442,7 +457,7 @@ chip8_error_code_t chip8_decode_handler_msb_E(chip8_t *chip8, ushort_t command, 
 
     uchar_t x;
 
-    x = command & CHIP8_NIBBLE_MASK(3);
+    x = CHIP8_NIBBLE(command, 3);
 
     CHIP8_ASSERT_VALID_REGISTER(chip8, x)
     CHIP8_ASSERT_VALID_KEY(chip8, chip8->registers[x])

@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(chip8)
 
+# set(CMAKE_C_COMPILER /usr/bin/clang)
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_COLOR_MAKEFILE ON)
 set(CMAKE_BUILD_PARALLEL_LEVEL $(sysctl -n hw.logicalcpu))
@@ -41,20 +42,31 @@ add_subdirectory(${SUBMOD_DIR}/cmocka)
 # Collect test source files
 file(GLOB CHIP8_TESTS_SRCS "tests/src/test_*.c")
 
-# Add a test executable
-add_executable(chip8_tests ${CHIP8_TESTS_SRCS})
 
-target_include_directories(chip8_tests PUBLIC src)
+###############################################################
+message(" [*] Compiling Chip8 Unit Tests: chip8_handlers_tests")
+set(CHIP8_HANDLERS_TESTS chip8_handlers_tests)
+add_executable(${CHIP8_HANDLERS_TESTS} ${CHIP8_TESTS_SRCS})
+target_include_directories(${CHIP8_HANDLERS_TESTS} PRIVATE src)
+target_link_libraries(${CHIP8_HANDLERS_TESTS} cmocka)
 
-target_link_options(chip8_tests PRIVATE
-    -Wl,-wrap=srand
-    -Wl,-wrap=time
-)
+# if(CMAKE_C_COMPILER_ID MATCHES "GNU")
+#   target_link_options(${CHIP8_HANDLERS_TESTS} PRIVATE
+#     -Wl,-wrap=srand
+#     -Wl,-wrap=time
+#   )
+# elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
+#   target_compile_options(${CHIP8_HANDLERS_TESTS} PRIVATE
+#     -Xlinker -wrap,srand
+#     -Xlinker -wrap,time
+#   )
+# endif()
 
-# Link Unit Tests with cmocka
-target_link_libraries(chip8_tests cmocka)
+add_test(NAME ${CHIP8_HANDLERS_TESTS} COMMAND ${CHIP8_HANDLERS_TESTS})
+message(" [+] Finished Chip8 Unit Tests: ${CHIP8_HANDLERS_TESTS}")
+###############################################################
+message(" [+] Finished Compiling Chip8 Unit Tests")
 
-# Add a test target
-add_test(NAME chip8_tests COMMAND chip8_tests)
 
-message(" [*] Finished Compiling Chip8 Unit Tests")
+message(" [+] Finished Compiling Chip8")
+

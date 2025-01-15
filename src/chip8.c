@@ -36,7 +36,7 @@ static chip8_error_code_t chip8_load_rom(chip8_t *chip8, const char *rom_file)
     {
         return CHIP8_ROM_ERR;
     }
-    printf("rom size: %lld\n", st.st_size);
+
     if (st.st_size > CHIP8_MAX_ROM_SIZE)
     {
         return CHIP8_ROM_TOO_BIG_ERR;

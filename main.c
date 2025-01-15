@@ -7,7 +7,7 @@ int main(int argc, char **argv) {
     chip8_t *chip8 = NULL;
     SDL_Window* window = NULL;
 
-    err = chip8_init(chip8, "/Users/orshtrauch/Workspace/Chip-8/ibm_logo.ch8");
+    err = chip8_init(chip8, "/Users/orshtrauch/Workspace/Chip-8/roms/ibm_logo.ch8");
     if (err != CHIP8_OK) {
         fprintf(stderr, "failed to init chip8, error: %d", err);
         goto out;
