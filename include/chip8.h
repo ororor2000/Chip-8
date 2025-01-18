@@ -1,10 +1,12 @@
 #ifndef __CHIP_8_H__
 #define __CHIP_8_H__
 
+#include <stdint.h>
+
 #define CHIP8_MEMORY_SIZE (4096)
 #define CHIP8_REGISTERS_SIZE (16)
 #define CHIP8_KEYPAD_SIZE (0xF)
-#define CHIP8_STACK_SIZE (16 * 2) /* 16 levels stack, each 2 byte*/
+#define CHIP8_STACK_SIZE (16 * 2) /* 16 levels stack, each 2 byte */
 
 #define CHIP8_DISPLAY_WIDTH (64)
 #define CHIP8_DISPLAY_HEIGHT (32)
@@ -52,17 +54,17 @@
         return CHIP8_INVALID_KEY_ERR;                                \
     }
 
+struct chip8;
+typedef struct chip8 chip8_t;
 typedef unsigned char uchar_t;
 typedef unsigned short ushort_t;
 
-typedef enum
-{
+typedef enum {
     CHIP8_KEY_IDLE,
     CHIP8_KEY_PRESSED,
 } chip8_key_state_t;
 
-typedef enum
-{
+typedef enum {
     CHIP8_OK = 0,
     CHIP8_ALLOC_ERR,
     CHIP8_ROM_TOO_BIG_ERR,
@@ -78,9 +80,12 @@ typedef enum
     CHIP8_MAX, /* must be last one */
 } chip8_error_code_t;
 
-typedef struct
-{
-    uint8_t draw: 1;
+typedef int (*chip8_cycle_handler)(chip8_t *chip8);
+typedef int (*decode_handler)(chip8_t *chip8, ushort_t command, uchar_t opcode);
+
+struct chip8 {
+    chip8_cycle_handler cycle_handler;
+    uint8_t draw;
     ushort_t program_counter;
     ushort_t stack_pointer;
     ushort_t i_register;
@@ -93,12 +98,10 @@ typedef struct
     uchar_t registers[CHIP8_REGISTERS_SIZE];
     uchar_t keypad_state[CHIP8_KEYPAD_SIZE + 1];
     uchar_t display[CHIP8_DISPLAY_HEIGHT][CHIP8_DISPLAY_WIDTH];
-} chip8_t;
+};
 
-typedef chip8_error_code_t (*decode_handler)(chip8_t *chip8, ushort_t command, uchar_t opcode);
 
-chip8_error_code_t chip8_init(chip8_t *chip8, const char *rom_file);
-chip8_error_code_t chip8_cycle(chip8_t *chip8);
+int chip8_init(chip8_t *chip8, const char *rom_file);
 void chip8_cleanup(chip8_t *chip8);
 
 #endif /* __CHIP_8_H__ */

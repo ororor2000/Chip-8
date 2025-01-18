@@ -7,6 +7,8 @@
 #include "chip8.h"
 #include "chip8_handlers.h"
 
+static int chip8_cycle(chip8_t *chip8);
+
 decode_handler handlers[] = {
     [0x0] = chip8_decode_handler_msb_0,
     [0x1] = chip8_decode_handler_msb_1,
@@ -26,11 +28,11 @@ decode_handler handlers[] = {
     [0xF] = chip8_decode_handler_msb_F,
 };
 
-static chip8_error_code_t chip8_load_rom(chip8_t *chip8, const char *rom_file)
+static int chip8_load_rom(chip8_t *chip8, const char *rom_file)
 {
     FILE *fd = NULL;
     struct stat st;
-    chip8_error_code_t err = CHIP8_OK;
+    int err = CHIP8_OK;
 
     if (stat(rom_file, &st) != 0)
     {
@@ -57,21 +59,15 @@ static chip8_error_code_t chip8_load_rom(chip8_t *chip8, const char *rom_file)
     return CHIP8_OK;
 }
 
-chip8_error_code_t chip8_init(chip8_t *chip8, const char *rom_file)
-{
-    chip8 = calloc(1, sizeof(chip8_t));
-    if (chip8 == NULL)
-    {
-        return CHIP8_ALLOC_ERR;
-    }
-
+int chip8_init(chip8_t *chip8, const char *rom_file) {
     chip8->program_counter = CHIP8_ROM_START;
+    chip8->cycle_handler = chip8_cycle;
     return chip8_load_rom(chip8, rom_file);
 }
 
-static chip8_error_code_t chip8_fetch_decode_execute(chip8_t *chip8)
+static int chip8_fetch_decode_execute(chip8_t *chip8)
 {
-    chip8_error_code_t err;
+    int err;
     ushort_t command;
     uchar_t opcode;
     int jump = 0;
@@ -81,35 +77,27 @@ static chip8_error_code_t chip8_fetch_decode_execute(chip8_t *chip8)
     /* append the second half of the command */
     command &= CHIP8_MEM(chip8, chip8->program_counter + 1);
 
+    printf("command: %x\n", command);
+
     /* opcode is the MSB (0xF000) */
     opcode = command & CHIP8_NIBBLE_MASK(4);
 
-    if (opcode < 0x00 || opcode > 0xF0 || !handlers[opcode])
-    {
+    if (opcode < 0x00 || opcode > 0xF0 || !handlers[opcode]) {
         return CHIP8_OPCODE_ERR;
     }
 
     err = handlers[opcode](chip8, command, opcode);
 
-    if (!jump)
-    {
+    if (!jump) {
         chip8->program_counter += 2;
     }
 
     return err;
 }
 
-chip8_error_code_t chip8_cycle(chip8_t *chip8)
-{
-    /* time delay equivalent to 1MHz */
-    struct timespec req = {0, 1000};
-    nanosleep(&req, NULL);
-
+static int chip8_cycle(chip8_t *chip8) {
     return chip8_fetch_decode_execute(chip8);
 }
 
-void chip8_cleanup(chip8_t *chip8)
-{
-    free(chip8);
-    /* TODO: */
+void chip8_cleanup(chip8_t *chip8) {
 }
